@@ -22,6 +22,7 @@ Checklisten-Punkte (Schlüssel und Beschreibung):
 - **rolleKi**: Die Rolle oder Persona, welche die KI einnehmen soll (z.B. Tutor, Debattenpartner, Kritiker), ist beschrieben.
 - **ausgabeformat**: Das gewünschte Format der KI-Antwort (z.B. Liste, Tabelle, Fließtext, Code) ist spezifiziert.
 - **lerneffekt**: Das pädagogische Ziel oder der konkrete Lerneffekt, der erzielt werden soll, ist klar.
+- **material**: Unterrichtsmaterialien (z.B. aus einem hochgeladenen PDF) wurden bereitgestellt und in den Kontext einbezogen.
 
 **Antwortformat (striktes JSON):**
 Deine Antwort muss IMMER ein valides JSON-Objekt sein, das genau diese Struktur hat:
@@ -32,7 +33,8 @@ Deine Antwort muss IMMER ein valides JSON-Objekt sein, das genau diese Struktur 
     "zielgruppe": boolean,
     "rolleKi": boolean,
     "ausgabeformat": boolean,
-    "lerneffekt": boolean
+    "lerneffekt": boolean,
+    "material": boolean
   }
 }
 `;
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
         // Fallback, wenn OpenAI kein valides JSON liefert
         return NextResponse.json({
             reply: "Es gab einen Fehler beim Verarbeiten der Antwort. " + responseContent,
-            checklist: { thema: false, zielgruppe: false, rolleKi: false, ausgabeformat: false, lerneffekt: false }
+            checklist: { thema: false, zielgruppe: false, rolleKi: false, ausgabeformat: false, lerneffekt: false, material: false }
         });
     }
 
