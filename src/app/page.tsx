@@ -14,8 +14,19 @@ const initialAssistantMsg: Message = {
   content: 'Hallo! Beschreibe, was die KI in deinem Unterricht tun soll, oder fülle die Felder oben aus, um den Prozess zu beschleunigen.'
 };
 
+interface ISpeechRecognition {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives: number;
+    onresult: (event: SpeechRecognitionEvent) => void;
+    onerror: (event: SpeechRecognitionErrorEvent) => void;
+    onend: () => void;
+    start: () => void;
+    stop: () => void;
+}
+
 // @ts-expect-error - SpeechRecognition is a browser API that might not be in the type definitions
-const SpeechRecognition: any = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : undefined;
+const SpeechRecognition: { new(): ISpeechRecognition } = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : undefined;
 
 interface SpeechRecognitionEvent extends Event {
     results: SpeechRecognitionResultList;
@@ -104,7 +115,7 @@ export default function Home() {
 
   const [modalContent, setModalContent] = useState<'imprint' | 'privacy' | null>(null);
   
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const checkedItemsCount = Object.values(checklist).filter(Boolean).length;
