@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, ChangeEvent, useEffect, useRef } from 'react';
-import { Paperclip, Mic, Send, Bot, User, BrainCircuit, Copy, Check, Info, X, FileText, Loader2, FileImage } from 'lucide-react';
+import { Mic, Send, Bot, User, BrainCircuit, Copy, Check, X, FileText, Loader2, FileImage } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Setup for pdf.js worker
@@ -14,8 +14,16 @@ const initialAssistantMsg: Message = {
   content: 'Hallo! Beschreibe, was die KI in deinem Unterricht tun soll, oder fülle die Felder oben aus, um den Prozess zu beschleunigen.'
 };
 
-// @ts-ignore
+// @ts-expect-error - SpeechRecognition is a browser API that might not be in the type definitions
 const SpeechRecognition: any = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : undefined;
+
+interface SpeechRecognitionEvent extends Event {
+    results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+    error: string;
+}
 
 const Modal = ({ title, children, onClose }: { title: string, children: React.ReactNode, onClose: () => void }) => (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
@@ -203,11 +211,11 @@ export default function Home() {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     setIsRecording(true);
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       setInput(prev => prev ? prev + ' ' + transcript : transcript);
     };
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setError('Fehler bei der Spracherkennung: ' + (event.error || 'Unbekannter Fehler'));
       setIsRecording(false);
     };
@@ -245,7 +253,7 @@ export default function Home() {
   async function sendMessage() {
     if (!input.trim() && !image) return;
 
-    let userMessages = [];
+    const userMessages = [];
     const structuredDataPayload = getStructuredDataPayload();
     // Füge strukturierte Daten nur bei der ersten Nachricht des Benutzers hinzu
     if (messages.length === 1 && structuredDataPayload) {
@@ -293,7 +301,7 @@ export default function Home() {
     setResult('');
     setError(null);
     
-    let messagesForGeneration = [...messages];
+    const messagesForGeneration = [...messages];
     const structuredDataPayload = getStructuredDataPayload();
     if (structuredDataPayload && messages.length <= 2) { // Füge hinzu, falls noch kein User-Input da
       messagesForGeneration.splice(1, 0, structuredDataPayload);
@@ -546,7 +554,7 @@ export default function Home() {
                     <ul className="list-disc list-inside space-y-1 mt-2">
                         <li><b>Keine Speicherung auf dem Server:</b> Es werden keine Ihrer Eingaben, Konversationen oder generierten Instruktionen auf den Servern von eduprompt.ch gespeichert oder protokolliert.</li>
                         <li><b>Temporäre Speicherung im Browser:</b> Die gesamte Interaktion (Chatverlauf, Eingaben in Formularfelder) wird ausschliesslich temporär in Ihrem Webbrowser gespeichert. Beim Schliessen des Browser-Tabs oder beim Neuladen der Seite werden diese Daten vollständig gelöscht.</li>
-                        <li><b>Datenübermittlung an OpenAI:</b> Um die Antworten der "Input-KI" und die finale Instruktion zu generieren, werden Ihre Eingaben (Text und hochgeladene Bilder) an die Server von OpenAI in den USA übermittelt. Dieser Prozess ist für die Funktionalität der Seite unerlässlich.</li>
+                        <li><b>Datenübermittlung an OpenAI:</b> Um die Antworten der &quot;Input-KI&quot; und die finale Instruktion zu generieren, werden Ihre Eingaben (Text und hochgeladene Bilder) an die Server von OpenAI in den USA übermittelt. Dieser Prozess ist für die Funktionalität der Seite unerlässlich.</li>
                         <li><b>Keine Cookies:</b> Diese Seite verwendet keine Tracking-Cookies oder Analyse-Tools von Drittanbietern.</li>
                     </ul>
                     <p className="mt-4">

@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     try {
         const parsedContent = JSON.parse(responseContent);
         return NextResponse.json(parsedContent);
-    } catch (e) {
+    } catch {
         console.error("Fehler beim Parsen der JSON-Antwort von OpenAI:", responseContent);
         // Fallback, wenn OpenAI kein valides JSON liefert
         return NextResponse.json({
