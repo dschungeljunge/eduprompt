@@ -2,10 +2,6 @@
 
 import React, { useState, ChangeEvent, useEffect, useRef } from 'react';
 import { Mic, Send, Bot, User, BrainCircuit, Copy, Check, X, FileText, Loader2, FileImage } from 'lucide-react';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Setup for pdf.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 type Message = { role: 'user' | 'assistant'; content: string; imageBase64?: string };
 
@@ -165,6 +161,9 @@ export default function Home() {
         };
         reader.readAsDataURL(file);
     } else if (file.type === 'application/pdf') {
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
