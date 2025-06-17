@@ -49,11 +49,15 @@ const Modal = ({ title, children, onClose }: { title: string, children: React.Re
 const Footer = ({ onShowModal }: { onShowModal: (content: 'imprint' | 'privacy') => void }) => {
     return (
       <footer className="w-full text-center text-sm text-gray-500 py-8 mt-8 border-t border-gray-200">
-        <div className="space-x-4">
+        <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap">
           <button onClick={() => onShowModal('imprint')} className="underline hover:text-gray-800">Impressum</button>
           <button onClick={() => onShowModal('privacy')} className="underline hover:text-gray-800">Datenschutz</button>
           <a href="https://github.com/dschungeljunge/eduprompt" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-800">
             GitHub-Projekt
+          </a>
+          <a href="https://ko-fi.com/petervonderph" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.32 0L12 2.69z"></path><path d="M12 12.5a2.5 2.5 0 0 0-2.5 2.5V18h5v-3a2.5 2.5 0 0 0-2.5-2.5z"></path></svg>
+            Unterstütze das Projekt
           </a>
         </div>
       </footer>
