@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, ChangeEvent, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Mic, Send, Bot, User, BrainCircuit, Copy, Check, X, FileText, Loader2, FileImage } from 'lucide-react';
 
 type Message = { role: 'user' | 'assistant'; content: string; imageBase64?: string };
@@ -144,7 +145,9 @@ export default function Home() {
   }
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 1) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, loading]);
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -349,6 +352,9 @@ export default function Home() {
       </header>
 
       <main className="w-full max-w-4xl mx-auto p-4 lg:p-8 space-y-8">
+        <div className="flex justify-center mb-4">
+          <Image src="/Eduprompt.svg" alt="Eduprompt Logo" width={400} height={150} />
+        </div>
         <Section number={1} title="Kontext definieren (optional)">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="Klassenstufe" value={klassenstufe} onChange={e => setKlassenstufe(e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-blue-500 outline-none" />
