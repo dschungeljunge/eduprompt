@@ -6,15 +6,15 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Eduprompt",
-  description: "Vom pädagogischen Ziel zur perfekten KI-Instruktion für den Unterricht.",
+  description: "Von der Unterrichtsknacknuss zum KI-Lernaufgabenset.",
   openGraph: {
     title: "Eduprompt",
-    description: "Vom pädagogischen Ziel zur perfekten KI-Instruktion für den Unterricht.",
+    description: "Von der Unterrichtsknacknuss zum KI-Lernaufgabenset.",
     url: "https://www.eduprompt.ch",
     siteName: "Eduprompt",
     images: [
       {
-        url: "https://www.eduprompt.ch/og-image.png", // Muss noch erstellt und hochgeladen werden
+        url: "https://www.eduprompt.ch/og-image.png",
         width: 1200,
         height: 630,
       },
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Eduprompt",
-    description: "Vom pädagogischen Ziel zur perfekten KI-Instruktion für den Unterricht.",
-    images: ["https://www.eduprompt.ch/og-image.png"], // Muss noch erstellt und hochgeladen werden
+    description: "Von der Unterrichtsknacknuss zum KI-Lernaufgabenset.",
+    images: ["https://www.eduprompt.ch/og-image.png"],
   },
 };
 
