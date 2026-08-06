@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Outfit } from "next/font/google";
 import "./globals.css";
+import "./eduprompt.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const display = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-v3-display",
+});
+
+const sans = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-v3-sans",
+});
 
 export const metadata: Metadata = {
   title: "Eduprompt",
@@ -37,7 +48,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={inter.className}>{children}</body>
+      <body className={`${display.variable} ${sans.variable}`}>{children}</body>
     </html>
   );
 }
