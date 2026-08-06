@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createChatCompletion, TOKEN_BUDGET } from '@/lib/openai';
 
 const systemPrompt = `
 Du bist didaktische Beratungs-KI für eduprompt.ch V2. Aus dem Chat einer Lehrperson erzeugst du genau 2 oder 3 Vorschläge für den Unterricht – kontrollierte Alternativen zur SELBEN Knacknuss, keine Ideenlotterie.
@@ -46,11 +47,7 @@ Du bist didaktische Beratungs-KI für eduprompt.ch V2. Aus dem Chat einer Lehrpe
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
-    const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OpenAI API key not set.' }, { status: 500 });
-    }
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Kein Chatverlauf.' }, { status: 400 });
     }
@@ -59,35 +56,27 @@ export async function POST(req: NextRequest) {
       .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Lehrperson' : 'Assistent'}: ${m.content}`)
       .join('\n\n');
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Erzeuge 2–3 passende Vorschläge aus diesem Dialog:\n\n${chatText}`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 2000,
-        temperature: 0.4,
-      }),
+    const result = await createChatCompletion({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: `Erzeuge 2–3 passende Vorschläge aus diesem Dialog:\n\n${chatText}`,
+        },
+      ],
+      maxCompletionTokens: TOKEN_BUDGET.proposals,
+      json: true,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API Error:', errorText);
-      return NextResponse.json({ error: 'Fehler von der OpenAI API.' }, { status: response.status });
+    if (!result.ok) {
+      if (result.errorText === 'OpenAI API key not set.') {
+        return NextResponse.json({ error: result.errorText }, { status: 500 });
+      }
+      console.error('OpenAI API Error:', result.errorText);
+      return NextResponse.json({ error: 'Fehler von der OpenAI API.' }, { status: result.status });
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = result.content;
     if (!content) {
       return NextResponse.json({ error: 'Leere Antwort.' }, { status: 500 });
     }

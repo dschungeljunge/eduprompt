@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createChatCompletion, TOKEN_BUDGET } from '@/lib/openai';
 
 type Message = { role: 'user' | 'assistant'; content: string; imageBase64?: string };
 
@@ -39,11 +40,7 @@ Du formulierst KEINE fertigen Unterrichtssequenzen und KEINE Prompts. Dein Ziel 
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
-    const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OpenAI API key not set.' }, { status: 500 });
-    }
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Keine Nachrichten übermittelt.' }, { status: 400 });
     }
@@ -61,30 +58,21 @@ export async function POST(req: NextRequest) {
       return { role: msg.role, content: msg.content };
     });
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [{ role: 'system', content: systemPrompt }, ...apiMessages],
-        response_format: { type: 'json_object' },
-        max_tokens: 500,
-        temperature: 0.3,
-      }),
+    const result = await createChatCompletion({
+      messages: [{ role: 'system', content: systemPrompt }, ...apiMessages],
+      maxCompletionTokens: TOKEN_BUDGET.inputKi,
+      json: true,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API Error:', errorText);
-      return NextResponse.json({ error: 'Fehler von der OpenAI API.' }, { status: response.status });
+    if (!result.ok) {
+      if (result.errorText === 'OpenAI API key not set.') {
+        return NextResponse.json({ error: result.errorText }, { status: 500 });
+      }
+      console.error('OpenAI API Error:', result.errorText);
+      return NextResponse.json({ error: 'Fehler von der OpenAI API.' }, { status: result.status });
     }
 
-    const data = await response.json();
-    const responseContent = data.choices?.[0]?.message?.content;
-
+    const responseContent = result.content;
     if (!responseContent) {
       return NextResponse.json({ error: 'Leere Antwort von der OpenAI API.' }, { status: 500 });
     }

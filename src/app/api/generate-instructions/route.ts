@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createChatCompletion, TOKEN_BUDGET } from '@/lib/openai';
 
 const systemPrompt = `
 Du bist ein Weltklasse-Experte für "Prompt Engineering" mit einem Doktortitel in Pädagogik. Deine Spezialität ist es, komplexe Unterrichtsszenarien in präzise, effektive und unmissverständliche Anweisungen für eine KI umzuwandeln.
@@ -24,48 +25,32 @@ Analysiere den folgenden Chatverlauf zwischen einer Lehrperson und einer helfend
 
 export async function POST(req: NextRequest) {
   const { chat } = await req.json();
-  const apiKey = process.env.OPENAI_API_KEY;
 
-  if (!apiKey) {
-    return NextResponse.json({ error: 'OpenAI API key not set.' }, { status: 500 });
-  }
   if (!chat || !Array.isArray(chat) || chat.length === 0) {
     return NextResponse.json({ error: 'Invalid chat.' }, { status: 400 });
   }
 
-  // Filtere nur die relevanten Nachrichten für die finale Generierung
-  const relevantMessages = chat.map(m => ({
+  const relevantMessages = chat.map((m: { role: 'user' | 'assistant' | 'system'; content: string }) => ({
     role: m.role,
-    content: m.content
+    content: m.content,
   }));
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-            { role: 'system', content: systemPrompt },
-            ...relevantMessages
-        ],
-        max_tokens: 800,
-        temperature: 0.2,
-      }),
+    const result = await createChatCompletion({
+      messages: [{ role: 'system', content: systemPrompt }, ...relevantMessages],
+      maxCompletionTokens: TOKEN_BUDGET.generateInstructions,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json({ error: error.error?.message || 'OpenAI API error.' }, { status: 500 });
+    if (!result.ok) {
+      if (result.errorText === 'OpenAI API key not set.') {
+        return NextResponse.json({ error: result.errorText }, { status: 500 });
+      }
+      console.error('OpenAI API Error:', result.errorText);
+      return NextResponse.json({ error: 'OpenAI API error.' }, { status: 500 });
     }
 
-    const data = await response.json();
-    const result = data.choices?.[0]?.message?.content || '';
-    return NextResponse.json({ result });
+    return NextResponse.json({ result: result.content || '' });
   } catch {
     return NextResponse.json({ error: 'Server error.' }, { status: 500 });
   }
-} 
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createChatCompletion, TOKEN_BUDGET } from '@/lib/openai';
 
 const systemPrompt = `
 Du arbeitest für eduprompt.ch V2. Die Lehrperson hat einen Vorschlag gewählt. Du arbeitest ihn zu einer flachen Unterrichtsskizze aus und formulierst **einsatzbereite, robuste Prompts** nur für KI-Schritte.
@@ -61,11 +62,7 @@ Die UI zeigt Hinweise kompakt; der Inhalt darf trotzdem gehaltvoll sein (mehrere
 export async function POST(req: NextRequest) {
   try {
     const { messages, proposal } = await req.json();
-    const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
-      return NextResponse.json({ error: 'OpenAI API key not set.' }, { status: 500 });
-    }
     if (!proposal) {
       return NextResponse.json({ error: 'Kein Vorschlag.' }, { status: 400 });
     }
@@ -76,38 +73,30 @@ export async function POST(req: NextRequest) {
           .join('\n\n')
       : '';
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Dialog-Kontext:\n${chatText}\n\nGewählter Vorschlag (JSON):\n${JSON.stringify(proposal, null, 2)}\n\nArbeite diesen Vorschlag aus.
+    const result = await createChatCompletion({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: `Dialog-Kontext:\n${chatText}\n\nGewählter Vorschlag (JSON):\n${JSON.stringify(proposal, null, 2)}\n\nArbeite diesen Vorschlag aus.
 - Jeden KI-Prompt vollständig und einsatzbereit (nicht als Einzeiler).
 - Kontext-, Funktions- und Grenzen-Hinweise gehaltvoll.
 - Bei Schritten ohne KI (vor/nach der KI): summary als didaktischer Kommentar mit 3–4 Sätzen inkl. Begründung der Wirkung.`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 6000,
-        temperature: 0.35,
-      }),
+        },
+      ],
+      maxCompletionTokens: TOKEN_BUDGET.elaborate,
+      json: true,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API Error:', errorText);
-      return NextResponse.json({ error: 'Fehler von der OpenAI API.' }, { status: response.status });
+    if (!result.ok) {
+      if (result.errorText === 'OpenAI API key not set.') {
+        return NextResponse.json({ error: result.errorText }, { status: 500 });
+      }
+      console.error('OpenAI API Error:', result.errorText);
+      return NextResponse.json({ error: 'Fehler von der OpenAI API.' }, { status: result.status });
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = result.content;
     if (!content) {
       return NextResponse.json({ error: 'Leere Antwort.' }, { status: 500 });
     }
